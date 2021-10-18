@@ -1,0 +1,135 @@
+name: "Get Project Item Id"
+author: 'Tetsuya Mori'
+description: 'Get Project Item Id of GitHub Projects (Beta)'
+branding:
+  icon: hash
+  color: green
+inputs:
+  github-token:
+    default: ''
+    required: true
+    description: 'Personal Access Token that with `repo` and `org:read` is granted.'
+  project-id:
+    default: ''
+    required: false
+    description: 'Node Id of project.'
+  project-owner:
+    default: ''
+    required: false
+    description: 'User/Organization name project contains.'
+  project-owner-type:
+    default: 'organization'
+    required: false
+    description: 'Type of owner of project: User, Organization'
+  project-number:
+    default: 0
+    required: false
+    description: 'The number of the target project.'
+  issue-id:
+    default: ''
+    required: false
+    description: 'Node Id of issue.'
+  issue-repository:
+    default: ''
+    required: false
+    description: 'Repository name with owner of issue.'
+  issue-number:
+    default: 0
+    required: false
+    description: 'Number of issue.'
+outputs:
+  project-item-id:
+    description: 'Project Item Id that can be obtained from a project and issue.'
+    value: ${{ steps.get-project-item-id.outputs.result }}
+runs:
+  using: "composite"
+  steps:
+    - name: Get Project Id
+      uses: actions/github-script@v5
+      id: get-project-id
+      with:
+        result-encoding: string
+        github-token: ${{ inputs.github-token }}
+        script: |
+          if ('${{ inputs.project-id }}') {
+            return '${{ inputs.project-id }}';
+          }
+          const variables = {
+              headers: {
+                'GraphQL-Features': 'projects_next_graphql'
+              }
+          };
+          const query = `
+            query {
+              ${{ inputs.project-owner-type }}(login: "${{ inputs.project-owner }}") {
+                projectNext(number: ${{ inputs.project-number }}) {
+                  id
+                }
+              }
+            }
+          `;
+          var result = await github.graphql(query, variables);
+          return result.${{ inputs.project-owner-type }}.projectNext.id || '';
+    - name: Get Project Item Id
+      uses: actions/github-script@v5
+      id: get-project-item-id
+      with:
+        result-encoding: string
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const variables = {
+              projectId: '${{ steps.get-project-id.outputs.result }}',
+              cursor: null,
+              headers: {
+                'GraphQL-Features': 'projects_next_graphql'
+              }
+          };
+          const query = `
+            query($projectId: ID!, $cursor: String) {
+              rateLimit {
+                cost
+                remaining
+              }
+              node(id: $projectId) {
+                ... on ProjectNext {
+                  items(first: 2, after: $cursor) {
+                    pageInfo {
+                      hasNextPage
+                      endCursor
+                    }
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          id
+                          number
+                          repository {
+                            nameWithOwner
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          `;
+          let result = { node: { items: { pageInfo: { hasNextPage: true, endCursor: null }, nodes: [{ id: null, content: { id: null } }] } } };
+          let projectNextItemId = null;
+          while (result.node.items.pageInfo.hasNextPage) {
+            result = await github.graphql(query, variables);
+            for (const itemNode of result.node.items.nodes) {
+              if (
+                ('${{ inputs.issue-id }}' && itemNode.content.id == '${{ inputs.issue-id }}') ||
+                (${{ inputs.issue-number }} > 0 && '${{ inputs.issue-repository }}' && itemNode.content.number == ${{ inputs.issue-number }} && itemNode.content.repository.nameWithOwner == '${{ inputs.issue-repository }}')
+              ) {
+                projectNextItemId = itemNode.id;
+                break;
+              }
+            }
+            if (projectNextItemId) {
+              break;
+            }
+            variables.cursor = result.node.items.pageInfo.endCursor;
+          }
+          return projectNextItemId || '';
