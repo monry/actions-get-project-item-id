@@ -62,7 +62,7 @@ runs:
             return '';
           }
 
-          var projectId = '${{ inputs.project-id }}' || '${{ steps.get-project-id.outputs.result }}';
+          var projectId = '${{ inputs.project-id }}' || '${{ steps.get-project-id.outputs.project-id }}';
           if (!projectId) {
             return '';
           }
