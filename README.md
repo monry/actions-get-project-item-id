@@ -12,7 +12,6 @@ Get node ID of Project Item.
     # Personal Access Token that with `repo` and `org:read` are granted.
     github-token: ${{ secrets.PAT_PROJECT_NEXT }}
     project-owner: 'monry'
-    project-owner-type: 'user'
     project-number: 1
     issue-repository: 'monry/awesome-repository'
     issue-number: 100
@@ -49,17 +48,6 @@ See also: [monry/actions-get-project-id](https://github.com/monry/actions-get-pr
 Owner name of project.
 
 Owner name refers to the user name or the organization name.
-
-**NOTICE** This value is required if `project-id` is not specified.
-
-## `project-owner-type`
-
-Type of owner of project.
-
-The value should be one of the following values.
-
-- `user`
-- `organization` (default)
 
 **NOTICE** This value is required if `project-id` is not specified.
 
@@ -101,7 +89,6 @@ Obtained value stores into output variable named `project-item-id`.
   with:
     github-token: ${{ secrets.PAT_PROJECT_NEXT }}
     project-owner: 'monry'
-    project-owner-type: 'user'
     project-number: 1
     issue-repository: 'monry/awesome-repository'
     issue-number: 100
