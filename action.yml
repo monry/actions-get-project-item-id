@@ -17,10 +17,6 @@ inputs:
     default: ''
     required: false
     description: 'User/Organization name project contains.'
-  project-owner-type:
-    default: 'organization'
-    required: false
-    description: 'Type of owner of project: User, Organization'
   project-number:
     default: 0
     required: false
@@ -45,31 +41,12 @@ runs:
   using: "composite"
   steps:
     - name: Get Project Id
-      uses: actions/github-script@v5
+      uses: monry/actions-get-project-id@v1
       id: get-project-id
       with:
-        result-encoding: string
         github-token: ${{ inputs.github-token }}
-        script: |
-          if ('${{ inputs.project-id }}') {
-            return '${{ inputs.project-id }}';
-          }
-          const variables = {
-              headers: {
-                'GraphQL-Features': 'projects_next_graphql'
-              }
-          };
-          const query = `
-            query {
-              ${{ inputs.project-owner-type }}(login: "${{ inputs.project-owner }}") {
-                projectNext(number: ${{ inputs.project-number }}) {
-                  id
-                }
-              }
-            }
-          `;
-          var result = await github.graphql(query, variables);
-          return result.${{ inputs.project-owner-type }}.projectNext.id || '';
+        project-owner: ${{ inputs.project-owner }}
+        project-number: ${{ inputs.project-number }}
     - name: Get Project Item Id
       uses: actions/github-script@v5
       id: get-project-item-id
@@ -77,8 +54,21 @@ runs:
         result-encoding: string
         github-token: ${{ inputs.github-token }}
         script: |
+          // Cannot use `if` at steps in composite actions, so validate here.
+          if ('${{ inputs.issue-id }}'.length == 0 && ${{ inputs.issue-number }} <= 0 && '${{ inputs.issue-repository }}'.length == 0) {
+            return '';
+          }
+          if ('${{ inputs.project-id }}'.length == 0 && '${{ inputs.project-owner }}'.length == 0 && ${{ inputs.project-number }} <= 0) {
+            return '';
+          }
+
+          var projectId = '${{ inputs.project-id }}' || '${{ steps.get-project-id.outputs.result }}';
+          if (!projectId) {
+            return '';
+          }
+
           const variables = {
-              projectId: '${{ steps.get-project-id.outputs.result }}',
+              projectId: projectId,
               cursor: null,
               headers: {
                 'GraphQL-Features': 'projects_next_graphql'
