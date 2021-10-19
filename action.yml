@@ -82,7 +82,7 @@ runs:
               }
               node(id: $projectId) {
                 ... on ProjectNext {
-                  items(first: 2, after: $cursor) {
+                  items(first: 100, after: $cursor) {
                     pageInfo {
                       hasNextPage
                       endCursor
