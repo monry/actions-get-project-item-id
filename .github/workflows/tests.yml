@@ -80,7 +80,7 @@ jobs:
       with:
         github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         project-id: 'PVT_kwHOAAzNIc4AFSrF'
-        issue-id: 'I_kwDOGPMKCs5QhmDB'
+        issue-id: 'I_'
     - name: Assert
       run: |
         test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
