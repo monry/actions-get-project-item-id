@@ -70,7 +70,7 @@ jobs:
       run: |
         test '${{ steps.get-project-item-id.outputs.project-item-id }}' = 'PVTI_lAHOAAzNIc4AFSrFzgCN6bU'
   test-issue-id-not-found:
-    name: Id of issue does not found
+    name: There is no issue specified by id exists
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -85,7 +85,7 @@ jobs:
       run: |
         test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
   test-issue-number-not-found:
-    name: Number of issue does not found
+    name: There is no issue specified by number exists
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
