@@ -69,3 +69,49 @@ jobs:
     - name: Assert
       run: |
         test '${{ steps.get-project-item-id.outputs.project-id }}' = 'PVTI_lAHOAAzNIc4AFSrFzgCN6bU'
+  test-issue-id-not-found:
+    name: Id of issue does not found
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Project Item Id
+      id: get-project-item-id
+      uses: ./
+      with:
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        project-id: 'PVT_kwHOAAzNIc4AFSrF'
+        issue-id: 'I_kwDOGPMKCs5QhmDB'
+    - name: Assert
+      run: |
+        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
+  test-issue-number-not-found:
+    name: Number of issue does not found
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Project Item Id
+      id: get-project-item-id
+      uses: ./
+      with:
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        project-id: 'PVT_kwHOAAzNIc4AFSrF'
+        issue-repository: 'monry/actions-get-project-item-id'
+        issue-number: -1
+    - name: Assert
+      run: |
+        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
+  test-issue-exists-but-not-in-project:
+    name: There is issue, but not in project
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Project Item Id
+      id: get-project-item-id
+      uses: ./
+      with:
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        project-id: 'PVT_kwHOAAzNIc4AFSrF'
+        issue-id: 'I_kwDOGPMKCs5QhvIZ'
+    - name: Assert
+      run: |
+        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
