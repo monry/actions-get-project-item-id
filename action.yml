@@ -41,7 +41,7 @@ runs:
   using: "composite"
   steps:
     - name: Get Project Id
-      uses: monry/actions-get-project-id@develop
+      uses: monry/actions-get-project-id@v2
       id: get-project-id
       with:
         github-token: ${{ inputs.github-token }}
