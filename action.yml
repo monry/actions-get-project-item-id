@@ -1,6 +1,6 @@
 name: "Get Project Item Id"
 author: 'Tetsuya Mori'
-description: 'Get Project Item Id of GitHub Projects (Beta)'
+description: 'Get Project Item Id of GitHub Projects'
 branding:
   icon: hash
   color: green
@@ -41,7 +41,7 @@ runs:
   using: "composite"
   steps:
     - name: Get Project Id
-      uses: monry/actions-get-project-id@v1
+      uses: monry/actions-get-project-id@v2
       id: get-project-id
       with:
         github-token: ${{ inputs.github-token }}
@@ -69,10 +69,7 @@ runs:
 
           const variables = {
               projectId: projectId,
-              cursor: null,
-              headers: {
-                'GraphQL-Features': 'projects_next_graphql'
-              }
+              cursor: null
           };
           const query = `
             query($projectId: ID!, $cursor: String) {
@@ -81,7 +78,7 @@ runs:
                 remaining
               }
               node(id: $projectId) {
-                ... on ProjectNext {
+                ... on ProjectV2 {
                   items(first: 100, after: $cursor) {
                     pageInfo {
                       hasNextPage
@@ -105,7 +102,7 @@ runs:
             }
           `;
           let result = { node: { items: { pageInfo: { hasNextPage: true, endCursor: null }, nodes: [{ id: null, content: { id: null } }] } } };
-          let projectNextItemId = null;
+          let projectV2ItemId = null;
           while (result.node.items.pageInfo.hasNextPage) {
             result = await github.graphql(query, variables);
             for (const itemNode of result.node.items.nodes) {
@@ -116,13 +113,13 @@ runs:
                 ('${{ inputs.issue-id }}' && itemNode.content.id == '${{ inputs.issue-id }}') ||
                 (${{ inputs.issue-number }} > 0 && '${{ inputs.issue-repository }}' && itemNode.content.number == ${{ inputs.issue-number }} && itemNode.content.repository.nameWithOwner == '${{ inputs.issue-repository }}')
               ) {
-                projectNextItemId = itemNode.id;
+                projectV2ItemId = itemNode.id;
                 break;
               }
             }
-            if (projectNextItemId) {
+            if (projectV2ItemId) {
               break;
             }
             variables.cursor = result.node.items.pageInfo.endCursor;
           }
-          return projectNextItemId || '';
+          return projectV2ItemId || '';
