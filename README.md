@@ -95,3 +95,8 @@ Obtained value stores into output variable named `project-item-id`.
 - run: |
     echo '${{ steps.get-project-item-id.outputs.project-item-id }}'
 ```
+
+## `error`
+
+Set error message if some error occured.
+
