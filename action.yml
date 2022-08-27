@@ -110,7 +110,7 @@ runs:
           let result = {};
           let projectV2ItemId = null;
           try {
-            while (result.node.items.pageInfo.hasNextPage) {
+            do {
               result = await github.graphql(query, variables);
               for (const itemNode of result.node.items.nodes) {
                 if (!itemNode || !itemNode.content) {
@@ -125,7 +125,7 @@ runs:
                 break;
               }
               variables.cursor = result.node.items.pageInfo.endCursor;
-            }
+            } while (result.node.items.pageInfo.hasNextPage);
           } catch (error) {
             if (error.data) {
               result = error.data;
