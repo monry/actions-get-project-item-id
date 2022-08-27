@@ -19,7 +19,7 @@ jobs:
         issue-id: 'I_kwDOGPMKCs5QhmDB'
     - name: Assert
       run: |
-        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = 'PVTI_lAHOAAzNIc4AFSrFzgCN6bU'
+        test '${{ steps.get-project-item-id.outputs.project-item-id }}${{ steps.get-project-item-id.outputs.error }}' = 'PVTI_lAHOAAzNIc4AFSrFzgCN6bU'
   test-project-number-issue-id:
     name: Specify number of project and id of issue
     runs-on: ubuntu-latest
