@@ -69,7 +69,38 @@ jobs:
     - name: Assert
       run: |
         test '${{ steps.get-project-item-id.outputs.project-item-id }}' = 'PVTI_lAHOAAzNIc4AFSrFzgCN6bU'
-  test-issue-id-not-found:
+  test-project-not-found-by-id:
+    name: There is no project specified by id exists
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Project Item Id
+      id: get-project-item-id
+      uses: ./
+      with:
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        project-id: 'PVT_'
+        issue-id: 'I_kwDOGPMKCs5QhmDB'
+    - name: Assert
+      run: |
+        test '${{ steps.get-project-item-id.outputs.error }}' = 'Project does not found.'
+  test-project-not-found-by-number:
+    name: There is no project specified by number exists
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Project Item Id
+      id: get-project-item-id
+      uses: ./
+      with:
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        project-owner: 'monry'
+        project-number: -1
+        issue-id: 'I_kwDOGPMKCs5QhmDB'
+    - name: Assert
+      run: |
+        test '${{ steps.get-project-item-id.outputs.error }}' = 'Project does not found.'
+  test-issue-not-found-by-id:
     name: There is no issue specified by id exists
     runs-on: ubuntu-latest
     steps:
@@ -82,9 +113,10 @@ jobs:
         project-id: 'PVT_kwHOAAzNIc4AFSrF'
         issue-id: 'I_'
     - name: Assert
+      # If `issue-id` is specified, it is not possible to distinguish whether the Issue is missing or the Project Item is missing
       run: |
-        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
-  test-issue-number-not-found:
+        test '${{ steps.get-project-item-id.outputs.error }}' = 'Project Item does not found.'
+  test-issue-not-found-by-number:
     name: There is no issue specified by number exists
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +131,7 @@ jobs:
         issue-number: -1
     - name: Assert
       run: |
-        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
+        test '${{ steps.get-project-item-id.outputs.error }}' = 'Issue does not found.'
   test-issue-exists-but-not-in-project:
     name: There is issue, but not in project
     runs-on: ubuntu-latest
@@ -114,4 +146,4 @@ jobs:
         issue-id: 'I_kwDOGPMKCs5QhvIZ'
     - name: Assert
       run: |
-        test '${{ steps.get-project-item-id.outputs.project-item-id }}' = ''
+        test '${{ steps.get-project-item-id.outputs.error }}' = 'Project Item does not found.'
