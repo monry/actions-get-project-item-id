@@ -60,7 +60,7 @@ runs:
         issue-repository: ${{ inputs.issue-repository }}
         issue-number: ${{ inputs.issue-number }}
     - name: Get Project Item Id
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       id: get-project-item-id
       with:
         result-encoding: string
