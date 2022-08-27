@@ -36,7 +36,10 @@ inputs:
 outputs:
   project-item-id:
     description: 'Project Item Id that can be obtained from a project and issue.'
-    value: ${{ steps.get-project-item-id.outputs.result }}
+    value: ${{ steps.get-project-item-id.outputs.project-item-id }}
+  error:
+    description: 'Error message.'
+    value: ${{ steps.get-project-item-id.outputs.error }}
 runs:
   using: "composite"
   steps:
