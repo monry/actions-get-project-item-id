@@ -43,10 +43,19 @@ runs:
     - name: Get Project Id
       uses: monry/actions-get-project-id@v2
       id: get-project-id
+      if: inputs.project-id == '' && inputs.project-owner != ''
       with:
         github-token: ${{ inputs.github-token }}
         project-owner: ${{ inputs.project-owner }}
         project-number: ${{ inputs.project-number }}
+    - name: Get Issue Id
+      uses: monry/actions-get-issue-id@v1
+      id: get-issue-id
+      if: inputs.issue-id == '' && inputs.issue-repository != ''
+      with:
+        github-token: ${{ inputs.github-token }}
+        issue-repository: ${{ inputs.issue-repository }}
+        issue-number: ${{ inputs.issue-number }}
     - name: Get Project Item Id
       uses: actions/github-script@v5
       id: get-project-item-id
@@ -54,17 +63,15 @@ runs:
         result-encoding: string
         github-token: ${{ inputs.github-token }}
         script: |
-          // Cannot use `if` at steps in composite actions, so validate here.
-          if ('${{ inputs.issue-id }}'.length == 0 && ${{ inputs.issue-number }} <= 0 && '${{ inputs.issue-repository }}'.length == 0) {
-            return '';
-          }
-          if ('${{ inputs.project-id }}'.length == 0 && '${{ inputs.project-owner }}'.length == 0 && ${{ inputs.project-number }} <= 0) {
-            return '';
-          }
-
           var projectId = '${{ inputs.project-id }}' || '${{ steps.get-project-id.outputs.project-id }}';
           if (!projectId) {
-            return '';
+            core.setOutput('error', 'Project does not found.');
+            return;
+          }
+          var issueId = '${{ inputs.issue-id }}' || '${{ steps.get-issue-id.outputs.issue-id }}';
+          if (!issueId) {
+            core.setOutput('error', 'Issue does not found.');
+            return;
           }
 
           const variables = {
@@ -89,10 +96,6 @@ runs:
                       content {
                         ... on Issue {
                           id
-                          number
-                          repository {
-                            nameWithOwner
-                          }
                         }
                       }
                     }
@@ -101,25 +104,40 @@ runs:
               }
             }
           `;
-          let result = { node: { items: { pageInfo: { hasNextPage: true, endCursor: null }, nodes: [{ id: null, content: { id: null } }] } } };
+          let result = {};
           let projectV2ItemId = null;
-          while (result.node.items.pageInfo.hasNextPage) {
-            result = await github.graphql(query, variables);
-            for (const itemNode of result.node.items.nodes) {
-              if (!itemNode || !itemNode.content) {
-                continue;
+          try {
+            while (result.node.items.pageInfo.hasNextPage) {
+              result = await github.graphql(query, variables);
+              for (const itemNode of result.node.items.nodes) {
+                if (!itemNode || !itemNode.content) {
+                  continue;
+                }
+                if (itemNode.content.id == issueId) {
+                  projectV2ItemId = itemNode.id;
+                  break;
+                }
               }
-              if (
-                ('${{ inputs.issue-id }}' && itemNode.content.id == '${{ inputs.issue-id }}') ||
-                (${{ inputs.issue-number }} > 0 && '${{ inputs.issue-repository }}' && itemNode.content.number == ${{ inputs.issue-number }} && itemNode.content.repository.nameWithOwner == '${{ inputs.issue-repository }}')
-              ) {
-                projectV2ItemId = itemNode.id;
+              if (projectV2ItemId) {
                 break;
               }
+              variables.cursor = result.node.items.pageInfo.endCursor;
             }
-            if (projectV2ItemId) {
-              break;
+          } catch (error) {
+            if (error.data) {
+              result = error.data;
             }
-            variables.cursor = result.node.items.pageInfo.endCursor;
           }
-          return projectV2ItemId || '';
+
+          if (!result.node) {
+            core.setOutput('error', 'Project does not found.');
+            return;
+          }
+
+          if (!projectV2ItemId) {
+            core.setOutput('error', 'Project Item does not found.');
+            return;
+          }
+
+          core.setOutput('project-item-id', projectV2ItemId);
+          return;
